@@ -68,10 +68,12 @@ class MediaConnection extends Connection {
       audioCodec: this._options.audioCodec,
       videoReceiveEnabled: this._options.videoReceiveEnabled,
       audioReceiveEnabled: this._options.audioReceiveEnabled,
+      remoteId: this.remoteId,
     });
 
     this._pcAvailable = true;
     this._handleQueuedMessages();
+
   }
 
   /**
@@ -108,6 +110,7 @@ class MediaConnection extends Connection {
       audioCodec: options.audioCodec,
       videoReceiveEnabled: options.videoReceiveEnabled,
       audioReceiveEnabled: options.audioReceiveEnabled,
+      remoteId: this._options.payload.src,
     });
     this._negotiator.setRemoteBrowser(this._options.payload.browser);
     this._pcAvailable = true;

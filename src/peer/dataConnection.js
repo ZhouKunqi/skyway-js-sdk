@@ -107,6 +107,7 @@ class DataConnection extends Connection {
         label: this.label,
         dcInit: this.dcInit,
         pcConfig: this._options.pcConfig,
+        remoteId: remoteId,
       }
     );
 

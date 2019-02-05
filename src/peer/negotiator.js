@@ -18,6 +18,8 @@ const NegotiatorEvents = new Enum([
   'error',
 ]);
 
+const callstats = window.callstats();
+
 /**
  * Class that manages RTCPeerConnection and SDP exchange.
  * @extends EventEmitter
@@ -58,6 +60,17 @@ class Negotiator extends EventEmitter {
    */
   async startConnection(options = {}) {
     this._pc = this._createPeerConnection(options.pcConfig);
+
+    console.log(options.remoteId);
+
+    const usage = callstats.fabricUsage.multiplex;
+    const fabricAttributes = {
+      remoteEndpointType:           callstats.endpointType.peer,
+      fabricTransmissionDirection:  callstats.transmissionDirection.sendrecv
+    };
+    
+    callstats.addNewFabric(this._pc, options.remoteId, usage, 'test', fabricAttributes);
+
     this._setupPCListeners();
     this.originator = options.originator;
     this._audioBandwidth = options.audioBandwidth;
@@ -180,7 +193,10 @@ class Negotiator extends EventEmitter {
     await this._pc
       .addIceCandidate(new RTCIceCandidate(candidate))
       .then(() => logger.log('Successfully added ICE candidate'))
-      .catch(err => logger.error('Failed to add ICE candidate', err));
+      .catch(err => {
+        logger.error('Failed to add ICE candidate', err);
+        callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.addIceCandidate, err);
+      });
   }
 
   /**
@@ -293,6 +309,7 @@ class Negotiator extends EventEmitter {
         case 'failed':
           logger.log('iceConnectionState is failed, closing connection');
           this.emit(Negotiator.EVENTS.iceConnectionFailed.key);
+          callstats.reportError(pc, 'test', callstats.webRTCFunctions.iceConnectionFailure, err);
           break;
         default:
           logger.log(`iceConnectionState is ${pc.iceConnectionState}`);
@@ -376,6 +393,7 @@ class Negotiator extends EventEmitter {
       err.type = 'webrtc';
       logger.error(err);
       this.emit(Negotiator.EVENTS.error.key, err);
+      callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.createOffer, err);
 
       logger.log('Failed to createOffer, ', err);
       throw err;
@@ -412,6 +430,7 @@ class Negotiator extends EventEmitter {
       err.type = 'webrtc';
       logger.error(err);
       this.emit(Negotiator.EVENTS.error.key, err);
+      callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.createAnswer, err);
 
       logger.log('Failed to createAnswer, ', err);
       throw err;
@@ -438,6 +457,7 @@ class Negotiator extends EventEmitter {
       err.type = 'webrtc';
       logger.error(err);
       this.emit(Negotiator.EVENTS.error.key, err);
+      callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.setLocalDescription, err);
 
       logger.log('Failed to setLocalDescription, ', err);
       throw err;
@@ -464,6 +484,7 @@ class Negotiator extends EventEmitter {
       err.type = 'webrtc';
       logger.error(err);
       this.emit(Negotiator.EVENTS.error.key, err);
+      callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.setLocalDescription, err);
 
       logger.log('Failed to setLocalDescription, ', err);
       throw err;
@@ -490,6 +511,7 @@ class Negotiator extends EventEmitter {
       err.type = 'webrtc';
       logger.error(err);
       this.emit(Negotiator.EVENTS.error.key, err);
+      callstats.reportError(this._pc, 'test', callstats.webRTCFunctions.setRemoteDescription, err);
 
       logger.log('Failed to setRemoteDescription: ', err);
       throw err;
